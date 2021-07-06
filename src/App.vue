@@ -82,6 +82,10 @@
                     <div
                         v-for="t in tickers"
                         :key="t.name"
+                        @click="selectTicker(t)"
+                        :class="{
+                            'border-4': t === selected,
+                        }"
                         class="
                             bg-white
                             overflow-hidden
@@ -115,7 +119,7 @@
                         </div>
                         <div class="w-full border-t border-gray-200"></div>
                         <button
-                            @click="removeTicker(t)"
+                            @click.stop="removeTicker(t)"
                             class="
                                 flex
                                 items-center
@@ -152,9 +156,10 @@
                 </dl>
                 <hr class="w-full border-t border-gray-600 my-4" />
             </template>
-            <section class="relative">
+
+            <section v-if="selected" class="relative">
                 <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
-                    VUE - USD
+                    {{ selected.name }} - USD
                 </h3>
                 <div
                     class="
@@ -164,12 +169,18 @@
                         h-64
                     "
                 >
-                    <div class="bg-purple-800 border w-10 h-24"></div>
-                    <div class="bg-purple-800 border w-10 h-32"></div>
-                    <div class="bg-purple-800 border w-10 h-48"></div>
-                    <div class="bg-purple-800 border w-10 h-16"></div>
+                    <div
+                        v-for="(bar, idx) in normalizedGraph()"
+                        :key="idx"
+                        class="bg-purple-800 border w-10"
+                        :style="{ height: bar + '%' }"
+                    ></div>
                 </div>
-                <button type="button" class="absolute top-0 right-0">
+                <button
+                    @click="selected = null"
+                    type="button"
+                    class="absolute top-0 right-0"
+                >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -202,11 +213,10 @@ export default {
     name: 'cryptonomicon',
     data() {
         return {
-            tickers: [
-                { name: 'DURCOIN', value: '123' },
-                { name: 'YobaCoin', value: '228' },
-            ],
+            tickers: [],
             tickerInInput: undefined,
+            selected: null,
+            graphData: [],
         }
     },
     methods: {
@@ -215,15 +225,51 @@ export default {
             if (!this.tickerInInput) return
 
             const newTicker = { name: this.tickerInInput, value: '-' }
-            this.tickers.push(newTicker)
+
+            // Опрашивать АПИ каждые 5 секунд, чтобы обновлять цену
+            newTicker.timerID = setInterval(async () => {
+                const price = await this.getPrice(newTicker.name)
+                this.tickers.find((t) => t.name === newTicker.name).value =
+                    price
+
+                if (this.selected && this.selected.name === newTicker.name) {
+                    this.graphData.push(price)
+                }
+            }, 5000)
+
             this.tickerInInput = ''
+            this.tickers.push(newTicker)
         },
 
         // Удалить тикер
         removeTicker: function (tickerToRemove) {
-            console.log
             this.tickers = this.tickers.filter(
                 (t) => t.name !== tickerToRemove.name
+            )
+            clearInterval(tickerToRemove.timerID)
+        },
+
+        selectTicker(ticker) {
+            this.selected = ticker
+            this.graphData = []
+        },
+
+        // Послать запрос к АПИ, чтобы получить цену валюты в USD
+        getPrice: async function (ticker) {
+            const response = await fetch(
+                `https://min-api.cryptocompare.com/data/price?fsym=${ticker}&tsyms=USD&api_key=924ee5dc54fc390bfe6acb14622c3cb78ebc255c9786de1f475dcfc703054315`
+            )
+            const data = await response.json()
+
+            return data.USD
+        },
+
+        normalizedGraph: function () {
+            const max = Math.max(...this.graphData)
+            const min = Math.min(...this.graphData)
+
+            return this.graphData.map(
+                (price) => 5 + ((price - min) * 95) / (max - min) || 50
             )
         },
     },
