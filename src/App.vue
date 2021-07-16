@@ -1,7 +1,7 @@
 <template>
     <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
         <div
-            v-if="false"
+            v-if="showSpinner"
             class="
                 fixed
                 w-100
@@ -336,6 +336,8 @@ export default {
             selected: null,
             graphData: [],
             showTickerExistMsg: false,
+            showSpinner: true,
+            coinNames: [],
         }
     },
     methods: {
@@ -407,6 +409,22 @@ export default {
                 (price) => 5 + ((price - min) * 95) / (max - min) || 50
             )
         },
+
+        // Загрузить список имен монеток для автокомплита
+        loadCoinNames: async function () {
+            const response = await fetch(
+                'https://min-api.cryptocompare.com/data/all/coinlist?summary=true'
+            )
+            const data = await response.json()
+
+            return Object.keys(data.Data)
+        },
+    },
+
+    mounted: async function () {
+        this.showSpinner = true
+        this.coinNames = await this.loadCoinNames()
+        this.showSpinner = false
     },
 }
 </script>
