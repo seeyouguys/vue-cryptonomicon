@@ -47,9 +47,9 @@
                         >
                         <div class="mt-1 relative rounded-md shadow-md">
                             <input
-                                @keyup.enter="addTicker"
-                                @input="showTickerExistMsg = false"
+                                @input="tickerInputHandler"
                                 v-model="tickerInInput"
+                                @keyup.enter="addTicker(tickerInInput)"
                                 type="text"
                                 name="wallet"
                                 id="wallet"
@@ -69,6 +69,7 @@
                             />
                         </div>
                         <div
+                            v-if="suggestions.length"
                             class="
                                 flex
                                 bg-white
@@ -80,6 +81,9 @@
                             "
                         >
                             <span
+                                v-for="s in suggestions"
+                                :key="s"
+                                @click="addTicker(s)"
                                 class="
                                     inline-flex
                                     items-center
@@ -93,55 +97,7 @@
                                     cursor-pointer
                                 "
                             >
-                                BTC
-                            </span>
-                            <span
-                                class="
-                                    inline-flex
-                                    items-center
-                                    px-2
-                                    m-1
-                                    rounded-md
-                                    text-xs
-                                    font-medium
-                                    bg-gray-300
-                                    text-gray-800
-                                    cursor-pointer
-                                "
-                            >
-                                DOGE
-                            </span>
-                            <span
-                                class="
-                                    inline-flex
-                                    items-center
-                                    px-2
-                                    m-1
-                                    rounded-md
-                                    text-xs
-                                    font-medium
-                                    bg-gray-300
-                                    text-gray-800
-                                    cursor-pointer
-                                "
-                            >
-                                BCH
-                            </span>
-                            <span
-                                class="
-                                    inline-flex
-                                    items-center
-                                    px-2
-                                    m-1
-                                    rounded-md
-                                    text-xs
-                                    font-medium
-                                    bg-gray-300
-                                    text-gray-800
-                                    cursor-pointer
-                                "
-                            >
-                                CHD
+                                {{ s }}
                             </span>
                         </div>
                         <div
@@ -153,7 +109,7 @@
                     </div>
                 </div>
                 <button
-                    @click="addTicker"
+                    @click="addTicker(tickerInInput)"
                     type="button"
                     class="
                         my-4
@@ -338,21 +294,20 @@ export default {
             showTickerExistMsg: false,
             showSpinner: true,
             coinNames: [],
+            suggestions: [],
         }
     },
     methods: {
         // Добавить новый тикер
-        addTicker: function () {
-            if (!this.tickerInInput) return
-
+        addTicker: function (tickerName) {
             // Не выводить тикер, если он уже показывается
-            if (this.isTickerAdded(this.tickerInInput)) {
+            if (this.isTickerAdded(tickerName)) {
                 this.showTickerExistMsg = true
                 return
             }
 
             const newTicker = {
-                name: this.tickerInInput.toUpperCase(),
+                name: tickerName.toUpperCase(),
                 value: '-',
             }
 
@@ -418,6 +373,30 @@ export default {
             const data = await response.json()
 
             return Object.keys(data.Data)
+        },
+
+        // Найти предложения для автокомплита (не более 4)
+        getSuggestions: function () {
+            let suggestions = []
+
+            for (const coin of this.coinNames) {
+                if (suggestions.length >= 4 || this.tickerInInput === '') break
+
+                if (
+                    coin
+                        .toLowerCase()
+                        .includes(this.tickerInInput.toLowerCase())
+                )
+                    suggestions.push(coin)
+            }
+
+            return suggestions
+        },
+
+        // Обработчик ввода внутри поля
+        tickerInputHandler: function () {
+            this.showTickerExistMsg = false
+            if (this.tickerInInput) this.suggestions = this.getSuggestions()
         },
     },
 
