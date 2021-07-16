@@ -1,6 +1,7 @@
 <template>
     <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
         <div
+            v-if="false"
             class="
                 fixed
                 w-100
@@ -47,6 +48,7 @@
                         <div class="mt-1 relative rounded-md shadow-md">
                             <input
                                 @keyup.enter="addTicker"
+                                @input="showTickerExistMsg = false"
                                 v-model="tickerInInput"
                                 type="text"
                                 name="wallet"
@@ -142,7 +144,10 @@
                                 CHD
                             </span>
                         </div>
-                        <div class="text-sm text-red-600">
+                        <div
+                            class="text-sm text-red-600"
+                            v-if="showTickerExistMsg"
+                        >
                             Такой тикер уже добавлен
                         </div>
                     </div>
@@ -330,6 +335,7 @@ export default {
             tickerInInput: undefined,
             selected: null,
             graphData: [],
+            showTickerExistMsg: false,
         }
     },
     methods: {
@@ -337,7 +343,16 @@ export default {
         addTicker: function () {
             if (!this.tickerInInput) return
 
-            const newTicker = { name: this.tickerInInput, value: '-' }
+            // Не выводить тикер, если он уже показывается
+            if (this.isTickerAdded(this.tickerInInput)) {
+                this.showTickerExistMsg = true
+                return
+            }
+
+            const newTicker = {
+                name: this.tickerInInput.toUpperCase(),
+                value: '-',
+            }
 
             // Опрашивать АПИ каждые 5 секунд, чтобы обновлять цену
             newTicker.timerID = setInterval(async () => {
@@ -352,6 +367,13 @@ export default {
 
             this.tickerInInput = ''
             this.tickers.push(newTicker)
+        },
+
+        // Проверить, выводится ли уже этот тикер
+        isTickerAdded: function (tickerToCheck) {
+            return !!this.tickers.find(
+                (t) => t.name.toLowerCase() === tickerToCheck.toLowerCase()
+            )
         },
 
         // Удалить тикер
