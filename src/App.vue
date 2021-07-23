@@ -149,12 +149,33 @@
                     </svg>
                     Добавить
                 </button>
+
+                <div class="mt-1 relative">
+                    <input
+                        v-model="filter"
+                        type="text"
+                        name="filter"
+                        id="filter"
+                        class="
+                            inline-flex
+                            pr-10
+                            border-gray-300
+                            text-gray-900
+                            focus:outline-none
+                            focus:ring-gray-500
+                            focus:border-gray-500
+                            sm:text-sm
+                            rounded-md
+                        "
+                        placeholder="Фильтр"
+                    />
+                </div>
             </section>
-            <template v-if="tickers.length > 0">
+            <template v-if="filteredTickers().length > 0">
                 <hr class="w-full border-t border-gray-600 my-4" />
                 <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
                     <div
-                        v-for="t in tickers"
+                        v-for="t in filteredTickers()"
                         :key="t.name"
                         @click="selectTicker(t)"
                         :class="{
@@ -295,9 +316,17 @@ export default {
             showSpinner: true,
             coinNames: [],
             suggestions: [],
+            filter: '',
         }
     },
     methods: {
+        // Отфильтрованные тикеры
+        filteredTickers: function () {
+            return this.tickers.filter((t) =>
+                t.name.toLowerCase().includes(this.filter.toLowerCase())
+            )
+        },
+
         // Подписать тикер на изменения его цены
         subscribeToPriceChange: function (ticker, interval = 10000) {
             // По таймеру отправлять запрос. ID таймера сохранить как поле тикера чтобы остановить его при удалении тикера
