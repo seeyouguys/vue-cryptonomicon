@@ -298,6 +298,20 @@ export default {
         }
     },
     methods: {
+        // Подписать тикер на изменения его цены
+        subscribeToPriceChange: function (ticker, interval = 10000) {
+            // По таймеру отправлять запрос. ID таймера сохранить как поле тикера чтобы остановить его при удалении тикера
+            ticker.timerID = setInterval(async () => {
+                const price = await this.getPrice(ticker.name)
+
+                this.tickers.find((t) => t.name === ticker.name).value = price
+
+                if (this.selected && this.selected.name === ticker.name) {
+                    this.graphData.push(price)
+                }
+            }, interval)
+        },
+
         // Добавить новый тикер
         addTicker: function (tickerName) {
             // Не выводить тикер, если он уже показывается
@@ -311,19 +325,13 @@ export default {
                 value: '-',
             }
 
-            // Опрашивать АПИ каждые 5 секунд, чтобы обновлять цену
-            newTicker.timerID = setInterval(async () => {
-                const price = await this.getPrice(newTicker.name)
-                this.tickers.find((t) => t.name === newTicker.name).value =
-                    price
-
-                if (this.selected && this.selected.name === newTicker.name) {
-                    this.graphData.push(price)
-                }
-            }, 5000)
+            this.subscribeToPriceChange(newTicker)
 
             this.tickerInInput = ''
             this.tickers.push(newTicker)
+
+            // Обновить сохраненные в localStorage тикеры
+            localStorage.setItem('tickers', JSON.stringify(this.tickers))
         },
 
         // Проверить, выводится ли уже этот тикер
@@ -339,6 +347,9 @@ export default {
                 (t) => t.name !== tickerToRemove.name
             )
             clearInterval(tickerToRemove.timerID)
+
+            // Обновить сохраненные в localStorage тикеры
+            localStorage.setItem('tickers', JSON.stringify(this.tickers))
         },
 
         selectTicker(ticker) {
@@ -347,9 +358,9 @@ export default {
         },
 
         // Послать запрос к АПИ, чтобы получить цену валюты в USD
-        getPrice: async function (ticker) {
+        getPrice: async function (tickerName) {
             const response = await fetch(
-                `https://min-api.cryptocompare.com/data/price?fsym=${ticker}&tsyms=USD&api_key=924ee5dc54fc390bfe6acb14622c3cb78ebc255c9786de1f475dcfc703054315`
+                `https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=924ee5dc54fc390bfe6acb14622c3cb78ebc255c9786de1f475dcfc703054315`
             )
             const data = await response.json()
 
@@ -404,6 +415,11 @@ export default {
         this.showSpinner = true
         this.coinNames = await this.loadCoinNames()
         this.showSpinner = false
+
+        // Если в localStorage есть сохраненные тикеры, то загрузить их
+        this.tickers = JSON.parse(localStorage.getItem('tickers')) || []
+        // Подписать их на обновления цен
+        this.tickers.forEach((t) => this.subscribeToPriceChange(t))
     },
 }
 </script>
