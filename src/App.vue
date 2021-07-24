@@ -169,13 +169,79 @@
                         "
                         placeholder="Фильтр"
                     />
+
+                    <button
+                        type="button"
+                        @click="curPage -= 1"
+                        v-if="curPage > 0"
+                        class="
+                            mx-2
+                            my-4
+                            inline-flex
+                            items-center
+                            py-2
+                            px-4
+                            border border-transparent
+                            shadow-sm
+                            text-sm
+                            leading-4
+                            font-medium
+                            rounded-full
+                            text-white
+                            bg-gray-600
+                            hover:bg-gray-700
+                            transition-colors
+                            duration-300
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-offset-2
+                            focus:ring-gray-500
+                        "
+                    >
+                        Назад
+                    </button>
+
+                    <span v-if="this.filteredTickers.length > 6">{{
+                        curPage
+                    }}</span>
+
+                    <button
+                        type="button"
+                        @click="curPage += 1"
+                        v-if="curPage < lastPageNumber"
+                        class="
+                            mx-2
+                            my-4
+                            inline-flex
+                            items-center
+                            py-2
+                            px-4
+                            border border-transparent
+                            shadow-sm
+                            text-sm
+                            leading-4
+                            font-medium
+                            rounded-full
+                            text-white
+                            bg-gray-600
+                            hover:bg-gray-700
+                            transition-colors
+                            duration-300
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-offset-2
+                            focus:ring-gray-500
+                        "
+                    >
+                        Вперед
+                    </button>
                 </div>
             </section>
-            <template v-if="filteredTickers().length > 0">
+            <template v-if="page.length > 0">
                 <hr class="w-full border-t border-gray-600 my-4" />
                 <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
                     <div
-                        v-for="t in filteredTickers()"
+                        v-for="t in page"
                         :key="t.name"
                         @click="selectTicker(t)"
                         :class="{
@@ -317,16 +383,10 @@ export default {
             coinNames: [],
             suggestions: [],
             filter: '',
+            curPage: 0,
         }
     },
     methods: {
-        // Отфильтрованные тикеры
-        filteredTickers: function () {
-            return this.tickers.filter((t) =>
-                t.name.toLowerCase().includes(this.filter.toLowerCase())
-            )
-        },
-
         // Подписать тикер на изменения его цены
         subscribeToPriceChange: function (ticker, interval = 10000) {
             // По таймеру отправлять запрос. ID таймера сохранить как поле тикера чтобы остановить его при удалении тикера
@@ -437,6 +497,31 @@ export default {
         tickerInputHandler: function () {
             this.showTickerExistMsg = false
             if (this.tickerInInput) this.suggestions = this.getSuggestions()
+        },
+    },
+
+    computed: {
+        // Номер последней страницы
+        lastPageNumber: function () {
+            return Math.ceil(this.filteredTickers.length / 6) - 1
+        },
+
+        // На каждой странице по 6 тикеров. Функция выдает 1-ю, 2-ю, 3-ю... шестерку тикеров
+        page: function () {
+            // 0 :  0 -  5
+            // 1 :  6 - 11
+            // 2 : 12 - 17
+            return this.filteredTickers.slice(
+                this.curPage * 6,
+                this.curPage * 6 + 6
+            )
+        },
+
+        // Отфильтрованные тикеры
+        filteredTickers: function () {
+            return this.tickers.filter((t) =>
+                t.name.toLowerCase().includes(this.filter.toLowerCase())
+            )
         },
     },
 
