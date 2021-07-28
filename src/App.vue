@@ -531,15 +531,11 @@ export default {
             const updatedURL = new URL(location.href)
             updatedURL.searchParams.set('filter', this.filter)
             history.replaceState(null, '', updatedURL)
-
-            /* location.search = searchParams.toString() */
         },
     },
 
     mounted: async function () {
         this.showSpinner = true
-        this.coinNames = await this.loadCoinNames()
-        this.showSpinner = false
 
         // Если в localStorage есть сохраненные тикеры, то загрузить их
         this.tickers = JSON.parse(localStorage.getItem('tickers')) || []
@@ -547,7 +543,12 @@ export default {
         this.tickers.forEach((t) => this.subscribeToPriceChange(t))
 
         // Если в URL передан фильтр, то применить его
-        this.filter = new URL(window.location).searchParams.get('filter') || ''
+        this.filter = new URL(location).searchParams.get('filter') || ''
+
+        // Загрузить список имен монет для автокомплита
+        this.coinNames = await this.loadCoinNames()
+
+        this.showSpinner = false
     },
 }
 </script>
