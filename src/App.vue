@@ -525,6 +525,17 @@ export default {
         },
     },
 
+    watch: {
+        // При изменении фильтра записывать его в URL
+        filter: function () {
+            const updatedURL = new URL(location.href)
+            updatedURL.searchParams.set('filter', this.filter)
+            history.replaceState(null, '', updatedURL)
+
+            /* location.search = searchParams.toString() */
+        },
+    },
+
     mounted: async function () {
         this.showSpinner = true
         this.coinNames = await this.loadCoinNames()
@@ -534,6 +545,9 @@ export default {
         this.tickers = JSON.parse(localStorage.getItem('tickers')) || []
         // Подписать их на обновления цен
         this.tickers.forEach((t) => this.subscribeToPriceChange(t))
+
+        // Если в URL передан фильтр, то применить его
+        this.filter = new URL(window.location).searchParams.get('filter') || ''
     },
 }
 </script>
