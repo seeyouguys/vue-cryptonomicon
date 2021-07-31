@@ -416,11 +416,10 @@ export default {
 
             this.subscribeToPriceChange(newTicker)
 
-            this.tickerInInput = ''
-            this.tickers.push(newTicker)
+            // tickers.push() не затригерит watch. а если переприсвоить массив, то watch сработает
+            this.tickers = [...this.tickers, newTicker]
 
-            // Обновить сохраненные в localStorage тикеры
-            localStorage.setItem('tickers', JSON.stringify(this.tickers))
+            this.tickerInInput = ''
         },
 
         // Проверить, выводится ли уже этот тикер
@@ -436,9 +435,6 @@ export default {
                 (t) => t.name !== tickerToRemove.name
             )
             clearInterval(tickerToRemove.timerID)
-
-            // Обновить сохраненные в localStorage тикеры
-            localStorage.setItem('tickers', JSON.stringify(this.tickers))
         },
 
         selectTicker(ticker) {
@@ -531,6 +527,14 @@ export default {
             const updatedURL = new URL(location.href)
             updatedURL.searchParams.set('filter', this.filter)
             history.replaceState(null, '', updatedURL)
+        },
+
+        // При изменении массива тикеров, обновлять localStorage
+        tickers: function () {
+            localStorage.setItem('tickers', JSON.stringify(this.tickers))
+            console.log(
+                'обновление тикеров затригерило обновление локалстораджа'
+            )
         },
     },
 
