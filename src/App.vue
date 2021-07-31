@@ -331,7 +331,7 @@
                     "
                 >
                     <div
-                        v-for="(bar, idx) in normalizedGraph()"
+                        v-for="(bar, idx) in normalizedGraph"
                         :key="idx"
                         class="bg-purple-800 border w-10"
                         :style="{ height: bar + '%' }"
@@ -452,15 +452,6 @@ export default {
             return data.USD
         },
 
-        normalizedGraph: function () {
-            const max = Math.max(...this.graphData)
-            const min = Math.min(...this.graphData)
-
-            return this.graphData.map(
-                (price) => 5 + ((price - min) * 95) / (max - min) || 50
-            )
-        },
-
         // Загрузить список имен монеток для автокомплита
         loadCoinNames: async function () {
             const response = await fetch(
@@ -517,6 +508,18 @@ export default {
         filteredTickers: function () {
             return this.tickers.filter((t) =>
                 t.name.toLowerCase().includes(this.filter.toLowerCase())
+            )
+        },
+
+        // Нормализованный граф
+        normalizedGraph: function () {
+            const max = Math.max(...this.graphData)
+            const min = Math.min(...this.graphData)
+
+            if (min === max) return this.graphData.map(() => 50)
+
+            return this.graphData.map(
+                (price) => 5 + ((price - min) * 95) / (max - min) || 50
             )
         },
     },
