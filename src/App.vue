@@ -545,9 +545,15 @@ export default {
             this.saveToURL('page', this.curPage)
         },
 
-        // При изменении массива тикеров, обновлять localStorage
         tickers: function () {
+            // При изменении массива тикеров, обновлять localStorage
             localStorage.setItem('tickers', JSON.stringify(this.tickers))
+
+            // Откатываться на страницу назад, если после удаления тикера текущая пуста
+            if (this.page.length === 0 && this.curPage > 0) this.curPage -= 1
+
+            // Переключаться на последнюю страницу, если добавлен тикер, а места на текущей нет
+            if (this.page.length === 6) this.curPage = this.lastPageNumber
         },
     },
 
