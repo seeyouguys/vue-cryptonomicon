@@ -545,9 +545,6 @@ export default {
         // При изменении массива тикеров, обновлять localStorage
         tickers: function () {
             localStorage.setItem('tickers', JSON.stringify(this.tickers))
-            console.log(
-                'обновление тикеров затригерило обновление локалстораджа'
-            )
         },
     },
 
