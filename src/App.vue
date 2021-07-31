@@ -431,9 +431,12 @@ export default {
 
         // Удалить тикер
         removeTicker: function (tickerToRemove) {
+            if (tickerToRemove === this.selected) this.selected = null
+
             this.tickers = this.tickers.filter(
                 (t) => t.name !== tickerToRemove.name
             )
+
             clearInterval(tickerToRemove.timerID)
         },
 
