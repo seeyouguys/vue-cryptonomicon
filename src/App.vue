@@ -485,6 +485,13 @@ export default {
             this.showTickerExistMsg = false
             if (this.tickerInInput) this.suggestions = this.getSuggestions()
         },
+
+        // Сохранить данные в URL как searchParams
+        saveToURL(key, value) {
+            const newURL = new URL(location.href)
+            newURL.searchParams.set(key, value)
+            history.replaceState(null, '', newURL)
+        },
     },
 
     computed: {
@@ -527,9 +534,12 @@ export default {
     watch: {
         // При изменении фильтра записывать его в URL
         filter: function () {
-            const updatedURL = new URL(location.href)
-            updatedURL.searchParams.set('filter', this.filter)
-            history.replaceState(null, '', updatedURL)
+            this.saveToURL('filter', this.filter)
+        },
+
+        // При изменении страницы записывать ее в URL
+        page: function () {
+            this.saveToURL('page', this.curPage)
         },
 
         // При изменении массива тикеров, обновлять localStorage
@@ -549,8 +559,10 @@ export default {
         // Подписать их на обновления цен
         this.tickers.forEach((t) => this.subscribeToPriceChange(t))
 
-        // Если в URL передан фильтр, то применить его
-        this.filter = new URL(location).searchParams.get('filter') || ''
+        // Достать из URL фильтр и номер страницы, если они там записаны
+        const searchParams = new URL(location).searchParams
+        this.filter = searchParams.get('filter') || ''
+        this.curPage = searchParams.get('page') || ''
 
         // Загрузить список имен монет для автокомплита
         this.coinNames = await this.loadCoinNames()
